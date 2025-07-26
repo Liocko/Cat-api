@@ -1,0 +1,62 @@
+groups:
+  - name: cat-service-alerts
+    rules:
+      - alert: CatServiceP99Latency
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+          service: cat-service
+        annotations:
+          summary: "🚨 ALERT: High P99 Latency Detected!"
+          description: "P99 latency exceeded 500ms! Our cat service is feeling slow. Time to investigate! 📊"
+
+      - alert: CatServiceHighDbRPS
+        expr: sum(rate(db_operations_total[15s])) > 100 and sum(rate(http_requests_total{route!="/api/test/dbload"}[15s])) < 50
+        for: 5s
+        labels:
+          severity: warning
+          service: cat-service
+        annotations:
+          summary: "🗄️ ALERT: High Database RPS!"
+          description: "Database operations per second exceeded 100! The database is under heavy load. Consider optimization or scaling! 📊"
+
+      - alert: CatServiceHighApiRPS
+        expr: sum(rate(http_requests_total{route!="/api/test/dbload"}[15s])) > 100
+        for: 5s
+        labels:
+          severity: warning
+          service: cat-service
+        annotations:
+          summary: "🌐 ALERT: High API RPS!"
+          description: "API requests per second exceeded 100! The service is under heavy load. Consider scaling! 📊"
+
+      - alert: CatServiceHighDbSaveRPS
+        expr: sum(rate(db_operations_total{operation="save"}[15s])) > 80 and sum(rate(http_requests_total{route!="/api/test/dbload"}[15s])) < 50
+        for: 5s
+        labels:
+          severity: warning
+          service: cat-service
+        annotations:
+          summary: "💾 ALERT: High Database Save RPS!"
+          description: "Database save operations per second exceeded 80! High write load detected! 📊"
+
+      - alert: CatServiceCatApiSlow
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{route="/api/cat"}[5m])) by (le)) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: cat-service
+        annotations:
+          summary: "🐌 ALERT: External Cat API Slow!"
+          description: "The external cat API is being lazy! 95th percentile latency for /api/cat is over 1 second. Maybe the cats are taking too long to pose for photos? 📸"
+
+      - alert: CatService5xxErrors
+        expr: sum(rate(http_requests_total{code=~"5.."}[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: cat-service
+        annotations:
+          summary: "🚨 ALERT: 5xx Error Detected!"
+          description: "{{ $value }} 5xx errors occurred in the last 5 minutes. Time to check what's bothering our feline friends! 🐾"

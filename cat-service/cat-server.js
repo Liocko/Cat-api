@@ -1,7 +1,7 @@
 import express from 'express';
 import fetch from 'node-fetch';
 import path from 'path';
-import { initDb, saveCat, likeCat, getTopCats, getHistory, getCatById, getCatByUrl } from './cat-db.js';
+import { initDb, saveCat, likeCat, getTopCats, getHistory, getCatById, getCatByUrl, setDbMetrics } from './cat-db.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import client from 'prom-client';
@@ -24,7 +24,7 @@ const swaggerDefinition = {
 };
 const swaggerOptions = {
   swaggerDefinition,
-  apis: ['./server.js'],
+  apis: ['./cat-server.js'],
 };
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -33,9 +33,6 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Инициализация БД
-initDb();
 
 // --- METRICS ---
 const register = client.register;
@@ -49,6 +46,29 @@ const httpRequestsTotal = new client.Counter({
   name: 'http_requests_total',
   help: 'Total number of HTTP requests',
   labelNames: ['method', 'route', 'code']
+});
+
+// Метрики для операций с БД
+const dbOperationsTotal = new client.Counter({
+  name: 'db_operations_total',
+  help: 'Total number of database operations',
+  labelNames: ['operation', 'table']
+});
+
+const dbOperationDurationSeconds = new client.Histogram({
+  name: 'db_operation_duration_seconds',
+  help: 'Duration of database operations in seconds',
+  labelNames: ['operation', 'table'],
+  buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1]
+});
+
+// Инициализация БД
+initDb();
+
+// Передаем метрики в БД модуль
+setDbMetrics({
+  dbOperationsTotal,
+  dbOperationDurationSeconds
 });
 // Middleware для сбора метрик (ДОЛЖЕН БЫТЬ ДО ВСЕХ РОУТОВ)
 app.use((req, res, next) => {
@@ -209,10 +229,91 @@ app.get('/api/cat/:id', async (req, res) => {
   res.json(cat);
 });
 
+/**
+ * @swagger
+ * /api/test/dbload:
+ *   post:
+ *     summary: Сгенерировать нагрузку на БД (много операций)
+ *     parameters:
+ *       - in: query
+ *         name: count
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: Сколько операций выполнить (по умолчанию 200)
+ *     responses:
+ *       200:
+ *         description: Количество выполненных операций
+ */
+app.post('/api/test/dbload', async (req, res) => {
+  const count = parseInt(req.query.count) || 200;
+  let lastId = null;
+  for (let i = 0; i < count; i++) {
+    // Сохраняем фиктивного котика с уникальным url
+    const cat = await saveCat(`https://test/cat/${Date.now()}_${i}`);
+    lastId = cat.id;
+  }
+  res.json({ success: true, operations: count, lastId });
+});
+
+/**
+ * @swagger
+ * /api/test/latency:
+ *   get:
+ *     summary: Сгенерировать искусственную задержку ответа
+ *     parameters:
+ *       - in: query
+ *         name: ms
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: Задержка в миллисекундах (по умолчанию 600)
+ *     responses:
+ *       200:
+ *         description: OK
+ */
+app.get('/api/test/latency', async (req, res) => {
+  const ms = parseInt(req.query.ms) || 600;
+  await new Promise(resolve => setTimeout(resolve, ms));
+  res.json({ success: true, latency: ms });
+});
+
+/**
+ * @swagger
+ * /api/test/error:
+ *   get:
+ *     summary: Сгенерировать искусственную 500 ошибку
+ *     responses:
+ *       200:
+ *         description: OK
+ */
+app.get('/api/test/error', (req, res) => {
+  res.status(500).json({ error: 'Test error for alert monitoring' });
+});
+
 // --- METRICS ENDPOINT ---
 app.get('/metrics', async (req, res) => {
   res.set('Content-Type', register.contentType);
   res.end(await register.metrics());
+});
+
+app.get('/api/test500', (req, res) => {
+  res.status(500).json({ error: 'Моковая 500 ошибка для теста алертов' });
+});
+
+app.get('/api/test500x20', (req, res) => {
+  let sent = 0;
+  function send500() {
+    res.write(JSON.stringify({ error: 'Моковая 500 ошибка для теста алертов', n: sent + 1 }) + '\n');
+    sent++;
+    if (sent < 20) {
+      setTimeout(send500, 30); // чуть-чуть задержки для метрик
+    } else {
+      res.end();
+    }
+  }
+  res.status(500);
+  send500();
 });
 
 app.listen(PORT, () => {

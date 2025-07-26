@@ -1,0 +1,28 @@
+global:
+  resolve_timeout: 1m
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alertmanager@example.org'
+
+route:
+  receiver: 'telegram'
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+
+receivers:
+  - name: 'telegram'
+    telegram_configs:
+      - bot_token: '8171322819:AAE69XsNvS9vWss7UwhXUilwOdoALjgvpS0'
+        chat_id: -1002387575913
+        message: |
+          🚨 CAT ALERT BOT 🚨
+
+          {{ range .Alerts }}
+          Alert: {{ .Labels.alertname }}
+          {{ .Annotations.summary }}
+          {{ .Annotations.description }}
+
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          Status: {{ .Status.state }}
+          {{ end }}

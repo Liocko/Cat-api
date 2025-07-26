@@ -2,9 +2,9 @@
   "name": "cat-service",
   "version": "1.0.0",
   "type": "module",
-  "main": "server.js",
+  "main": "cat-server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node cat-server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
