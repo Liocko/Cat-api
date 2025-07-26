@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Случайный котик</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', 'Comic Neue', cursive, sans-serif;
+      background: #fff;
+      min-height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5em;
+      color: #444;
+      text-shadow: 1px 1px 0 #eee;
+      margin-top: 40px;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+    #showCat {
+      background: #fff;
+      border: 2px dashed #bbb;
+      border-radius: 16px;
+      color: #444;
+      font-size: 1.2em;
+      font-family: inherit;
+      padding: 12px 28px;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s;
+      margin-top: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    #showCat:hover {
+      transform: scale(1.07) rotate(-2deg);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      background: #f9f9f9;
+    }
+    #catImg {
+      max-width: 420px;
+      border-radius: 24px;
+      margin-top: 30px;
+      margin-left: auto;
+      margin-right: auto;
+      display: block;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      border: 4px dashed #bbb;
+      background: #fff;
+      animation: popCat 0.5s cubic-bezier(.68,-0.55,.27,1.55);
+    }
+    @keyframes popCat {
+      0% { transform: scale(0.7) rotate(-8deg); opacity: 0; }
+      80% { transform: scale(1.1) rotate(3deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .cloud {
+      position: absolute;
+      width: 120px;
+      height: 60px;
+      background: #fff6a2;
+      border-radius: 60px;
+      top: 20px;
+      left: 10vw;
+      opacity: 0.5;
+      z-index: 0;
+      box-shadow: 40px 10px 0 0 #fff6a2, 80px 0px 0 0 #fff6a2;
+    }
+    .paw {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background: #ffd6e0;
+      border-radius: 50%;
+      bottom: 30px;
+      right: 12vw;
+      z-index: 0;
+      box-shadow: 20px 0px 0 0 #ffd6e0, 40px 10px 0 0 #ffd6e0;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <h1>Случайный котик <span style="font-size:1.2em;">🐱</span></h1>
+  <button id="showCat">Показать котика</button>
+  <div>
+    <img id="catImg" src="" alt="Котик" style="display:none;" />
+    <div id="catStats" style="display:none; margin-top:10px;">
+      <button id="likeBtn" style="padding:8px 18px; font-size:1em; border-radius:12px; border:2px solid #bbb; background:#fff; cursor:pointer;">❤️ Лайк</button>
+      <span id="views" style="margin-left:18px;">Просмотров: 0</span>
+      <span id="likes" style="margin-left:18px;">Лайков: 0</span>
+    </div>
+  </div>
+  <button id="showHistory" style="margin-top:30px; padding:10px 24px; font-size:1em; border-radius:12px; border:2px solid #bbb; background:#fff; cursor:pointer;">История</button>
+  <div id="historyPanel" style="display:none; margin:30px auto; max-width:500px; text-align:left;">
+    <h2 style="text-align:center;">История котиков</h2>
+    <ul id="historyList" style="list-style:none; padding:0;"></ul>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>

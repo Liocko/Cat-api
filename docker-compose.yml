@@ -1,0 +1,59 @@
+version: '3.7'
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: catuser
+      POSTGRES_PASSWORD: catpass
+      POSTGRES_DB: catdb
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  cat-service:
+    build: ./cat-service
+    environment:
+      PGUSER: catuser
+      PGPASSWORD: catpass
+      PGDATABASE: catdb
+      PGHOST: postgres
+      PGPORT: 5432
+    ports:
+      - 3000:3000
+    depends_on:
+      - postgres
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    depends_on:
+      - cat-service
+      - postgres_exporter
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - 3001:3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://catuser:catpass@postgres:5432/catdb?sslmode=disable
+    ports:
+      - 9187:9187
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata: 

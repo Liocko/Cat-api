@@ -1,0 +1,36 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Logs
+logs
+*.log
+
+# dotenv environment variables
+.env
+.env.*
+
+# Docker
+*.pid
+docker-compose.override.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Prometheus/Grafana
+monitoring/data/
+monitoring/grafana/
+
+# DB
+*.db
+cat-service/cat.db
+
+# Misc
+*.swp
+.idea/ 
