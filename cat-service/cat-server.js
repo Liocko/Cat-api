@@ -1,23 +1,5 @@
-import { exec } from 'child_process';
-/**
- * @swagger
- * /api/test/alerts:
- *   post:
- *     summary: Запустить нагрузочный тест для проверки алертов (test_alerts.js)
- *     responses:
- *       200:
- *         description: Тест запущен, алерты должны сработать в течение нескольких минут
- */
-app.post('/api/test/alerts', (req, res) => {
-  exec('node test_alerts.js', { cwd: __dirname }, (error, stdout, stderr) => {
-    if (error) {
-      res.status(500).json({ success: false, error: error.message, stderr });
-    } else {
-      res.json({ success: true, message: 'Alert test started', stdout });
-    }
-  });
-});
 import express from 'express';
+import { exec } from 'child_process';
 import fetch from 'node-fetch';
 import path from 'path';
 import { initDb, saveCat, likeCat, getTopCats, getHistory, getCatById, getCatByUrl, setDbMetrics } from './cat-db.js';
@@ -39,7 +21,7 @@ const swaggerDefinition = {
     version: '1.0.0',
     description: 'API для работы с котиками: случайный котик, лайки, история, топ.'
   },
-  servers: [{ url: 'http://46.21.245.152:3000' }],
+  servers: [{ url: 'http://localhost:3000' }],
 };
 const swaggerOptions = {
   swaggerDefinition,
@@ -100,6 +82,47 @@ app.use((req, res, next) => {
 });
 
 // --- API ROUTES ---
+
+/**
+ * @swagger
+ * /api/test/alerts:
+ *   post:
+ *     summary: Запустить нагрузочный тест для проверки алертов (test_alerts.js)
+ *     responses:
+ *       200:
+ *         description: Тест запущен, алерты должны сработать в течение нескольких минут
+ */
+app.post('/api/test/alerts', (req, res) => {
+  const fs = require('fs');
+  const testAlertsPath = path.join(__dirname, 'test_alerts.js');
+  
+  // Проверяем существование файла
+  if (!fs.existsSync(testAlertsPath)) {
+    return res.status(404).json({ 
+      success: false, 
+      error: 'test_alerts.js not found',
+      message: 'Файл test_alerts.js не найден в директории cat-service'
+    });
+  }
+  
+  exec('node test_alerts.js', { cwd: __dirname }, (error, stdout, stderr) => {
+    if (error) {
+      res.status(500).json({ 
+        success: false, 
+        error: error.message, 
+        stderr,
+        message: 'Ошибка при запуске теста алертов'
+      });
+    } else {
+      res.json({ 
+        success: true, 
+        message: 'Alert test started', 
+        stdout,
+        info: 'Тест алертов запущен. Проверьте Grafana и Alertmanager для просмотра результатов.'
+      });
+    }
+  });
+});
 /**
  * @swagger
  * /api/cat:
