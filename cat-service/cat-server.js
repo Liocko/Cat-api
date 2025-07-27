@@ -247,12 +247,13 @@ app.get('/api/cat/:id', async (req, res) => {
  */
 app.post('/api/test/dbload', async (req, res) => {
   const count = parseInt(req.query.count) || 200;
-  let lastId = null;
+  // Параллельно сохраняем котиков для высокой нагрузки
+  const promises = [];
   for (let i = 0; i < count; i++) {
-    // Сохраняем фиктивного котика с уникальным url
-    const cat = await saveCat(`https://test/cat/${Date.now()}_${i}`);
-    lastId = cat.id;
+    promises.push(saveCat(`https://test/cat/${Date.now()}_${i}`));
   }
+  const results = await Promise.all(promises);
+  const lastId = results.length > 0 ? results[results.length - 1].id : null;
   res.json({ success: true, operations: count, lastId });
 });
 

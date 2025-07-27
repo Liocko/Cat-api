@@ -12,8 +12,8 @@ groups:
           description: "P99 latency exceeded 500ms! Our cat service is feeling slow. Time to investigate! 📊"
 
       - alert: CatServiceHighDbRPS
-        expr: sum(rate(db_operations_total[15s])) > 100 and sum(rate(http_requests_total{route!="/api/test/dbload"}[15s])) < 50
-        for: 5s
+        expr: sum(rate(db_operations_total[15s])) > 100
+        for: 1s
         labels:
           severity: warning
           service: cat-service

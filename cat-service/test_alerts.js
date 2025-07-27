@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 const BASE_URL = 'http://localhost:3000';
-const DURATION_SECONDS = 60;
+const DURATION_SECONDS = 120;
 
 // Utility function to sleep
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -9,20 +9,17 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // Test high API RPS (without using The Cat API)
 async function testApiRps() {
     console.log('\nTesting High API RPS...');
-    console.log('Making 120 requests per second to /api/test/latency...');
-    
+    console.log('Sending many parallel requests to /api/test/latency...');
     const startTime = Date.now();
     let requestCount = 0;
-    
     while (Date.now() - startTime < DURATION_SECONDS * 1000) {
         const promises = [];
-        for (let i = 0; i < 12; i++) { // 12 requests every 100ms = 120 RPS
-            promises.push(fetch(`${BASE_URL}/api/test/latency?ms=50`));
+        for (let i = 0; i < 50; i++) {
+            promises.push(fetch(`${BASE_URL}/api/test/latency?ms=100`));
         }
         await Promise.all(promises);
-        requestCount += 12;
-        
-        if (requestCount % 120 === 0) {
+        requestCount += 50;
+        if (requestCount % 500 === 0) {
             console.log(`Requests: ${requestCount}, Time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
         }
         await sleep(100);
@@ -39,12 +36,11 @@ async function testHighLatency() {
     
     while (Date.now() - startTime < DURATION_SECONDS * 1000) {
         const promises = [];
-        for (let i = 0; i < 5; i++) { // 5 parallel requests every 200ms
+        for (let i = 0; i < 10; i++) {
             promises.push(fetch(`${BASE_URL}/api/test/latency?ms=1000`));
         }
         await Promise.all(promises);
-        requestCount += 5;
-        
+        requestCount += 10;
         console.log(`Requests: ${requestCount}, Time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
         await sleep(200);
     }
@@ -76,22 +72,21 @@ async function test5xxErrors() {
 // Test DB operations (already have load_db.js for this)
 async function testDbOperations() {
     console.log('\nTesting High DB RPS...');
-    console.log('Making requests to generate DB load...');
-    
+    console.log('Sending many parallel POSTs to /api/test/dbload?count=1 ...');
+    const DB_DURATION_SECONDS = 180;
     const startTime = Date.now();
     let requestCount = 0;
-    
-    while (Date.now() - startTime < DURATION_SECONDS * 1000) {
-        const response = await fetch(`${BASE_URL}/api/test/dbload?count=100`, { method: 'POST' });
-        if (!response.ok) {
-            console.error(`HTTP ${response.status}: ${response.statusText}`);
-            const text = await response.text();
-            console.error(`Response: ${text.substring(0, 200)}...`);
-            break;
+    while (Date.now() - startTime < DB_DURATION_SECONDS * 1000) {
+        const promises = [];
+        for (let i = 0; i < 50; i++) {
+            promises.push(fetch(`${BASE_URL}/api/test/dbload?count=1`, { method: 'POST' }));
         }
-        requestCount += 100;
-        console.log(`DB Operations: ${requestCount}, Time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
-        await sleep(1000); // Wait 1 second between batches
+        await Promise.all(promises);
+        requestCount += 50;
+        if (requestCount % 500 === 0) {
+            console.log(`DB Operations: ${requestCount}, Time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
+        }
+        await sleep(100);
     }
 }
 
