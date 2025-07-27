@@ -6,10 +6,10 @@ const DURATION_SECONDS = 60;
 // Utility function to sleep
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Test high API RPS (without /api/test/dbload)
+// Test high API RPS (without using The Cat API)
 async function testApiRps() {
     console.log('\nTesting High API RPS...');
-    console.log('Making 120 requests per second to /api/cat...');
+    console.log('Making 120 requests per second to /api/test/latency...');
     
     const startTime = Date.now();
     let requestCount = 0;
@@ -17,7 +17,7 @@ async function testApiRps() {
     while (Date.now() - startTime < DURATION_SECONDS * 1000) {
         const promises = [];
         for (let i = 0; i < 12; i++) { // 12 requests every 100ms = 120 RPS
-            promises.push(fetch(`${BASE_URL}/api/cat`));
+            promises.push(fetch(`${BASE_URL}/api/test/latency?ms=50`));
         }
         await Promise.all(promises);
         requestCount += 12;
@@ -100,7 +100,7 @@ async function runTests() {
     try {
         // First check if service is available
         console.log('Checking service availability...');
-        const testResponse = await fetch(`${BASE_URL}/api/cat`);
+        const testResponse = await fetch(`${BASE_URL}/api/test/latency?ms=10`);
         if (!testResponse.ok) {
             console.error(`Service unavailable: HTTP ${testResponse.status}`);
             return;
