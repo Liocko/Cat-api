@@ -1,3 +1,22 @@
+import { exec } from 'child_process';
+/**
+ * @swagger
+ * /api/test/alerts:
+ *   post:
+ *     summary: Запустить нагрузочный тест для проверки алертов (test_alerts.js)
+ *     responses:
+ *       200:
+ *         description: Тест запущен, алерты должны сработать в течение нескольких минут
+ */
+app.post('/api/test/alerts', (req, res) => {
+  exec('node test_alerts.js', { cwd: __dirname }, (error, stdout, stderr) => {
+    if (error) {
+      res.status(500).json({ success: false, error: error.message, stderr });
+    } else {
+      res.json({ success: true, message: 'Alert test started', stdout });
+    }
+  });
+});
 import express from 'express';
 import fetch from 'node-fetch';
 import path from 'path';
@@ -20,7 +39,7 @@ const swaggerDefinition = {
     version: '1.0.0',
     description: 'API для работы с котиками: случайный котик, лайки, история, топ.'
   },
-  servers: [{ url: 'http://localhost:3000' }],
+  servers: [{ url: 'http://46.21.245.152:3000' }],
 };
 const swaggerOptions = {
   swaggerDefinition,
