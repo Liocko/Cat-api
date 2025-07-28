@@ -21,7 +21,10 @@ const swaggerDefinition = {
     version: '1.0.0',
     description: 'API для работы с котиками: случайный котик, лайки, история, топ.'
   },
-  servers: [{ url: 'http://localhost:3000' }],
+  servers: [
+    { url: 'http://localhost:3000', description: 'Local development' },
+    { url: 'http://46.21.245.152:3000', description: 'Production server' }
+  ],
 };
 const swaggerOptions = {
   swaggerDefinition,
@@ -112,7 +115,7 @@ app.post('/api/test/alerts', (req, res) => {
       while (Date.now() - startTime < DURATION_SECONDS * 1000) {
         const promises = [];
         for (let i = 0; i < 50; i++) {
-          promises.push(fetch('/api/test/latency?ms=100'));
+          promises.push(fetch('http://localhost:3000/api/test/latency?ms=100'));
         }
         await Promise.all(promises);
         requestCount += 50;
@@ -136,7 +139,7 @@ app.post('/api/test/alerts', (req, res) => {
       while (Date.now() - startTime < DURATION_SECONDS * 1000) {
         const promises = [];
         for (let i = 0; i < 10; i++) {
-          promises.push(fetch('/api/test/latency?ms=1000'));
+          promises.push(fetch('http://localhost:3000/api/test/latency?ms=1000'));
         }
         await Promise.all(promises);
         requestCount += 10;
@@ -157,7 +160,7 @@ app.post('/api/test/alerts', (req, res) => {
       let requestCount = 0;
       while (Date.now() - startTime < DURATION_SECONDS * 1000) {
         try {
-          await fetch('/api/test/error');
+          await fetch('http://localhost:3000/api/test/error');
           requestCount++;
           if (requestCount % 10 === 0) {
             console.log(`Error Requests: ${requestCount}, Time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
@@ -182,7 +185,7 @@ app.post('/api/test/alerts', (req, res) => {
       while (Date.now() - startTime < DB_DURATION_SECONDS * 1000) {
         const promises = [];
         for (let i = 0; i < 50; i++) {
-          promises.push(fetch('/api/test/dbload?count=1', { method: 'POST' }));
+          promises.push(fetch('http://localhost:3000/api/test/dbload?count=1', { method: 'POST' }));
         }
         await Promise.all(promises);
         requestCount += 50;
