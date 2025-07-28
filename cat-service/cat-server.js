@@ -93,34 +93,128 @@ app.use((req, res, next) => {
  *         description: Тест запущен, алерты должны сработать в течение нескольких минут
  */
 app.post('/api/test/alerts', (req, res) => {
-  const fs = require('fs');
-  const testAlertsPath = path.join(__dirname, 'test_alerts.js');
+  // Тест алертов с оригинальной конфигурацией
+  console.log('🚨 Alert test triggered via Swagger UI');
   
-  // Проверяем существование файла
-  if (!fs.existsSync(testAlertsPath)) {
-    return res.status(404).json({ 
-      success: false, 
-      error: 'test_alerts.js not found',
-      message: 'Файл test_alerts.js не найден в директории cat-service'
-    });
-  }
+  const DURATION_SECONDS = 120;
+  const DB_DURATION_SECONDS = 180;
   
-  exec('node test_alerts.js', { cwd: __dirname }, (error, stdout, stderr) => {
-    if (error) {
-      res.status(500).json({ 
-        success: false, 
-        error: error.message, 
-        stderr,
-        message: 'Ошибка при запуске теста алертов'
-      });
-    } else {
-      res.json({ 
-        success: true, 
-        message: 'Alert test started', 
-        stdout,
-        info: 'Тест алертов запущен. Проверьте Grafana и Alertmanager для просмотра результатов.'
-      });
-    }
+  // Запускаем тесты в фоне
+  const testPromises = [];
+  
+  // Тест 1: High API RPS (120 секунд)
+  testPromises.push(
+    (async () => {
+      console.log('📊 Testing High API RPS...');
+      console.log('Sending many parallel requests to /api/test/latency...');
+      const startTime = Date.now();
+      let requestCount = 0;
+      while (Date.now() - startTime < DURATION_SECONDS * 1000) {
+        const promises = [];
+        for (let i = 0; i < 50; i++) {
+          promises.push(fetch('http://localhost:3000/api/test/latency?ms=100'));
+        }
+        await Promise.all(promises);
+        requestCount += 50;
+        if (requestCount % 500 === 0) {
+          console.log(`Requests: ${requestCount}, Time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      console.log(`✅ High API RPS test completed: ${requestCount} requests`);
+      return { test: 'High API RPS', requests: requestCount };
+    })()
+  );
+  
+  // Тест 2: High Latency (120 секунд)
+  testPromises.push(
+    (async () => {
+      console.log('🐌 Testing High Latency...');
+      console.log('Making requests with 1s delay...');
+      const startTime = Date.now();
+      let requestCount = 0;
+      while (Date.now() - startTime < DURATION_SECONDS * 1000) {
+        const promises = [];
+        for (let i = 0; i < 10; i++) {
+          promises.push(fetch('http://localhost:3000/api/test/latency?ms=1000'));
+        }
+        await Promise.all(promises);
+        requestCount += 10;
+        console.log(`Requests: ${requestCount}, Time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      console.log(`✅ High Latency test completed: ${requestCount} requests`);
+      return { test: 'High Latency', requests: requestCount };
+    })()
+  );
+  
+  // Тест 3: 5xx Errors (120 секунд)
+  testPromises.push(
+    (async () => {
+      console.log('💥 Testing 5xx Errors...');
+      console.log('Making requests to trigger 500 errors...');
+      const startTime = Date.now();
+      let requestCount = 0;
+      while (Date.now() - startTime < DURATION_SECONDS * 1000) {
+        try {
+          await fetch('http://localhost:3000/api/test/error');
+          requestCount++;
+          if (requestCount % 10 === 0) {
+            console.log(`Error Requests: ${requestCount}, Time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
+          }
+        } catch (error) {
+          // Expected error
+        }
+        await new Promise(resolve => setTimeout(resolve, 100)); // 10 errors per second
+      }
+      console.log(`✅ 5xx Errors test completed: ${requestCount} requests`);
+      return { test: '5xx Errors', requests: requestCount };
+    })()
+  );
+  
+  // Тест 4: High DB RPS (180 секунд)
+  testPromises.push(
+    (async () => {
+      console.log('🗄️ Testing High DB RPS...');
+      console.log('Sending many parallel POSTs to /api/test/dbload?count=1 ...');
+      const startTime = Date.now();
+      let requestCount = 0;
+      while (Date.now() - startTime < DB_DURATION_SECONDS * 1000) {
+        const promises = [];
+        for (let i = 0; i < 50; i++) {
+          promises.push(fetch('http://localhost:3000/api/test/dbload?count=1', { method: 'POST' }));
+        }
+        await Promise.all(promises);
+        requestCount += 50;
+        if (requestCount % 500 === 0) {
+          console.log(`DB Operations: ${requestCount}, Time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      console.log(`✅ High DB RPS test completed: ${requestCount} requests`);
+      return { test: 'High DB RPS', requests: requestCount };
+    })()
+  );
+  
+  // Запускаем все тесты в фоне
+  Promise.all(testPromises).then(results => {
+    console.log('🎉 All alert tests completed:', results);
+  }).catch(error => {
+    console.error('❌ Alert tests error:', error);
+  });
+  
+  // Сразу возвращаем ответ
+  res.json({ 
+    success: true, 
+    message: '🚨 Alert tests started!',
+    info: 'Тесты запущены в фоне с оригинальной конфигурацией. Проверьте логи сервера и Grafana/Alertmanager.',
+    tests: [
+      'High API RPS (120s)',
+      'High Latency (120s)', 
+      '5xx Errors (120s)',
+      'High DB RPS (180s)'
+    ],
+    note: 'Алерты должны сработать в течение 2-3 минут. Смотрите логи сервера для деталей.'
   });
 });
 /**

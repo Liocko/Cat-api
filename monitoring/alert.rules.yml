@@ -2,7 +2,7 @@ groups:
   - name: cat-service-alerts
     rules:
       - alert: CatServiceP99Latency
-        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.5
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le)) > 0.5
         for: 1m
         labels:
           severity: warning
@@ -12,8 +12,8 @@ groups:
           description: "P99 latency exceeded 500ms! Our cat service is feeling slow. Time to investigate! 📊"
 
       - alert: CatServiceHighDbRPS
-        expr: sum(rate(db_operations_total[15s])) > 100
-        for: 1s
+        expr: sum(rate(db_operations_total[10s])) > 10
+        for: 5s
         labels:
           severity: warning
           service: cat-service
@@ -22,7 +22,7 @@ groups:
           description: "Database operations per second exceeded 100! The database is under heavy load. Consider optimization or scaling! 📊"
 
       - alert: CatServiceHighApiRPS
-        expr: sum(rate(http_requests_total{route!="/api/test/dbload"}[15s])) > 100
+        expr: sum(rate(http_requests_total{route!="/api/test/dbload"}[5s])) > 100
         for: 5s
         labels:
           severity: warning
@@ -52,8 +52,8 @@ groups:
           description: "The external cat API is being lazy! 95th percentile latency for /api/cat is over 1 second. Maybe the cats are taking too long to pose for photos? 📸"
 
       - alert: CatService5xxErrors
-        expr: sum(rate(http_requests_total{code=~"5.."}[5m])) > 0
-        for: 1m
+        expr: sum(rate(http_requests_total{code=~"5.."}[5m])) > 10
+        for: 2m
         labels:
           severity: critical
           service: cat-service

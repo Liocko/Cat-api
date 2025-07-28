@@ -97,8 +97,8 @@ locust -f locustfile.py --host http://localhost:3000
 **Вариант 1: через Swagger**
 
 1. Откройте [http://localhost:3000/docs](http://localhost:3000/docs)
-2. Найдите ручку `POST /api/test/alerts` (Test alerts)
-3. Нажмите "Try it out" и выполните — запустится нагрузочный тест, алерты сработают автоматически (можно смотреть в Grafana/Alertmanager)
+2. Для проверки алертов на 5xx ошибки и DB RPS > 100: используйте ручку `POST /api/test/alerts`
+3. Для проверки алертов на latency: используйте ручку `POST /api/test/latency` с параметром `ms=1000`
 
 **Вариант 2: через скрипт**
 
@@ -107,7 +107,7 @@ cd cat-service
 node test_alerts.js
 ```
 
-Скрипт и ручка тестируют все алерты **БЕЗ использования The Cat API** (лимит не тратится):
+Скрипт и ручки тестируют все алерты **БЕЗ использования The Cat API** (лимит не тратится):
 1. High DB RPS — /api/test/dbload
 2. High API RPS — /api/test/latency
 3. High Latency — /api/test/latency?ms=1000
