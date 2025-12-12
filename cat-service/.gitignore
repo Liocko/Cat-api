@@ -1,0 +1,45 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.*
+*.local
+.DS_Store
+
+# Database
+*.db
+
+# IDE/editor junk
+.idea/
+.vscode/
+*.swp
+
+# Test coverage
+coverage/
+
+# Static analysis, reports & cache
+*.report.*
+*.tgz
+analysis/reports/*.txt
+analysis/reports/*.json
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log
+
+# Build/dist/static
+build/
+dist/
+
+# Python virtualenv
+.venv/
+venv/
+
+# Misc
+*.bak
+
+# Ignore cat-service-specific generated artifacts if needed

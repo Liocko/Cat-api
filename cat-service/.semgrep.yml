@@ -1,0 +1,7 @@
+rules:
+  - id: javascript-no-eval
+    patterns:
+      - pattern: eval($X)
+    message: Avoid eval() usage
+    languages: [javascript]
+    severity: WARNING

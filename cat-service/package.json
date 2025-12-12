@@ -4,7 +4,12 @@
   "type": "module",
   "main": "cat-server.js",
   "scripts": {
-    "start": "node cat-server.js"
+    "start": "node cat-server.js",
+    "lint:eslint": "eslint . --ext .js --format json -o analysis/reports/eslint.json || true",
+    "lint:jshint": "jshint . --reporter unix > analysis/reports/jshint.txt || true",
+    "scan:semgrep": "semgrep --config=auto --json > analysis/reports/semgrep.json || true",
+    "scan:audit": "npm audit --json > analysis/reports/npm_audit.json || true",
+    "bench:autocannon": "autocannon -c 10 -d 5 http://localhost:3000 > analysis/reports/autocannon.txt || true"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -15,5 +20,11 @@
     "sqlite3": "^5.1.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "autocannon": "8.0.0",
+    "eslint": "9.39.1",
+    "jshint": "2.13.6",
+    "semgrep": "0.0.1"
   }
 }
