@@ -30,11 +30,6 @@ const swaggerDefinition = {
     description:
       "API для работы с котиками: случайный котик, лайки, история, топ.",
   },
-  servers: [
-    { url: `http://${process.env.HOST || "localhost"}:${process.env.PORT || 3000}`, description: "Dynamic server" },
-    // Для production/hardcode если нужно:
-    // { url: "http://46.21.245.152:3000", description: "Production server" },
-  ],
 };
 const swaggerOptions = {
   swaggerDefinition,
